@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Watsonx-Malware-UI": {
+    "AI-Soldiers-UI": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/watsonx-malware-ui",
+            "outputPath": "dist/ai-soldiers-ui",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -69,10 +69,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Watsonx-Malware-UI:build:production"
+              "buildTarget": "AI-Soldiers-UI:build:production"
             },
             "development": {
-              "buildTarget": "Watsonx-Malware-UI:build:development"
+              "buildTarget": "AI-Soldiers-UI:build:development"
             }
           },
           "defaultConfiguration": "development"

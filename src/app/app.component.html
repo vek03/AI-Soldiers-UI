@@ -1,102 +1,169 @@
 <app-navbar></app-navbar>
 
 <main class="document-upload-container">
-  <div class="upload-card">
-    <div class="upload-icon">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L12 16M12 2L8 6M12 2L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
+  <div class="content-grid">
+    <div class="upload-card">
+      <div class="upload-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L12 16M12 2L8 6M12 2L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17L2 19C2 20.1046 2.89543 21 4 21L20 21C21.1046 21 22 20.1046 22 19L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
 
-    <h1 class="upload-title">Análise de Risco</h1>
-    <p class="upload-description">Faça upload de um arquivo CSV para análise de risco usando WatsonX</p>
+      <h1 class="upload-title">Análise de Risco</h1>
+      <p class="upload-description">Faça upload de um arquivo CSV para análise de risco usando WatsonX e GPT</p>
 
-    <div class="file-input-container"
-         (dragover)="onDragOver($event)"
-         (drop)="onDrop($event)">
-      <input type="file" id="documentInput" class="file-input" accept=".csv" (change)="onFileSelected($event)" />
-      <label for="documentInput" class="file-input-label" [class.has-file]="selectedFile">
-        <span class="file-input-text" *ngIf="!selectedFile">Escolher arquivo CSV</span>
-        <span class="file-input-text" *ngIf="selectedFile">{{ selectedFile.name }}</span>
-        <span class="file-input-hint" *ngIf="!selectedFile">ou arraste e solte aqui</span>
-        <span class="file-input-hint" *ngIf="selectedFile">Clique para alterar</span>
-      </label>
-    </div>
+      <div class="file-input-container"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop($event)">
+        <input type="file" id="documentInput" class="file-input" accept=".csv" (change)="onFileSelected($event)" />
+        <label for="documentInput" class="file-input-label" [class.has-file]="selectedFile">
+          <span class="file-input-text" *ngIf="!selectedFile">Escolher arquivo CSV</span>
+          <span class="file-input-text" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+          <span class="file-input-hint" *ngIf="!selectedFile">ou arraste e solte aqui</span>
+          <span class="file-input-hint" *ngIf="selectedFile">Clique para alterar</span>
+        </label>
+      </div>
 
-    <!-- Preview do arquivo -->
-    <div class="file-preview" *ngIf="selectedFile && csvData.length > 0">
-      <h4 class="preview-title">Preview dos dados CSV</h4>
-      <div class="preview-table-container">
-        <table class="preview-table">
-          <thead>
-            <tr>
-              <th *ngFor="let header of csvHeaders">{{ header }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let row of csvData.slice(0, 5); let i = index">
-              <td *ngFor="let cell of row">{{ cell }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="preview-info" *ngIf="csvData.length > 5">
-          Mostrando 5 de {{ csvData.length }} linhas
-        </p>
+      <!-- Preview do arquivo -->
+      <div class="file-preview" *ngIf="selectedFile && csvData.length > 0">
+        <h4 class="preview-title">Preview dos dados CSV</h4>
+        <div class="preview-table-container">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th *ngFor="let header of csvHeaders">{{ header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of csvData.slice(0, 10); let i = index">
+                <td *ngFor="let cell of row">{{ cell }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="preview-info" *ngIf="csvData.length > 10">
+            Mostrando 10 de {{ csvData.length }} linhas
+          </p>
+        </div>
+      </div>
+
+      <!-- Mensagens de erro/validação -->
+      <div class="validation-message" *ngIf="validationMessage">
+        <div class="message" [class.error]="validationMessage.type === 'error'" [class.success]="validationMessage.type === 'success'">
+          <span class="message-icon">{{ validationMessage.type === 'error' ? '❌' : '✅' }}</span>
+          <span class="message-text">{{ validationMessage.text }}</span>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="analyze-btn" [disabled]="!canAnalyze || isRealAnalyzing || isSimulatingAnalyzing" (click)="analyzeDocument()">
+          <span class="btn-text">{{ isSimulatingAnalyzing ? 'Analisando...' : 'Analisar com Simulação' }}</span>
+          <span class="btn-icon" *ngIf="!isSimulatingAnalyzing">→</span>
+          <span class="btn-spinner" *ngIf="isSimulatingAnalyzing">⏳</span>
+        </button>
+
+        <button class="analyze-btn real-api-btn" [disabled]="!canAnalyze || isRealAnalyzing || isSimulatingAnalyzing" (click)="analyzeWithRealAPI()">
+          <span class="btn-text">{{ isRealAnalyzing ? 'Analisando...' : 'Analisar com API Real' }}</span>
+          <span class="btn-icon" *ngIf="!isRealAnalyzing">🌐</span>
+          <span class="btn-spinner" *ngIf="isRealAnalyzing">⏳</span>
+        </button>
       </div>
     </div>
 
-    <!-- Mensagens de erro/validação -->
-    <div class="validation-message" *ngIf="validationMessage">
-      <div class="message" [class.error]="validationMessage.type === 'error'" [class.success]="validationMessage.type === 'success'">
-        <span class="message-icon">{{ validationMessage.type === 'error' ? '❌' : '✅' }}</span>
-        <span class="message-text">{{ validationMessage.text }}</span>
-      </div>
-    </div>
-
-    <!-- Resultados da análise -->
-    <div class="analysis-results" *ngIf="analysisResult">
-      <h4 class="results-title">Resultados da Análise de Risco</h4>
-      <div class="results-container">
-        <!-- Resultado para cada registro -->
-        <div class="result-record" *ngFor="let result of getAnalysisResults(); let i = index">
-          <h5 class="record-title">Registro {{ i + 1 }}</h5>
-          <div class="result-item">
-            <span class="result-label">Predição:</span>
-            <span class="result-value prediction" [class]="getPredictionClass(getPredictionValue(i))">
-              {{ getPredictionValue(i) }}
-            </span>
+    <!-- Resultados da análise à direita -->
+    <div class="results-card">
+      <div class="analysis-results">
+        <h4 class="results-title">Resultados da Análise de Risco</h4>
+        <div class="results-container results-scroll">
+          <!-- Aviso quando nenhum arquivo estiver selecionado -->
+          <div *ngIf="!selectedFile && !isAnalyzing && !analysisResult && !gptAnalysisResult" class="placeholder-message">
+            Anexe um arquivo CSV e clique em Analisar para visualizar os resultados aqui.
           </div>
-          <div class="result-item">
-            <span class="result-label">Probabilidades:</span>
-            <div class="probabilities">
-              <div class="probability-bar">
-                <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 0)">
-                  <span class="probability-text">{{ getProbabilityText(i, 0) }}</span>
+
+          <!-- Spinner de carregamento enquanto analisa -->
+          <div *ngIf="selectedFile && isAnalyzing" class="loading-container">
+            <div class="loading-spinner" aria-label="Carregando"></div>
+            <div class="loading-text">Analisando...</div>
+          </div>
+
+          <!-- Resultados quando disponíveis -->
+          <div class="results-two-col" *ngIf="selectedFile && !isAnalyzing && (analysisResult || gptAnalysisResult)">
+            <!-- Watsonx -->
+            <div>
+              <h5 class="record-title">Watsonx</h5>
+              <div *ngIf="analysisResult; else noWatsonx">
+                <div class="result-record" *ngFor="let result of getAnalysisResults(); let i = index">
+                  <div class="result-item">
+                    <span class="result-label">Registro:</span>
+                    <span class="result-value">#{{ i + 1 }} — {{ csvHeaders[0] }}: {{ csvData[i + 1][0] }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">Predição:</span>
+                    <span class="result-value prediction" [class]="getPredictionClass(getPredictionValue(i))">
+                      {{ getPredictionValue(i) }}
+                    </span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">Probabilidades:</span>
+                    <div class="probabilities">
+                      <div class="probability-bar">
+                        <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 0)">
+                          <span class="probability-text">{{ getProbabilityText(i, 0) }}</span>
+                        </div>
+                      </div>
+                      <div class="probability-bar">
+                        <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 1)">
+                          <span class="probability-text">{{ getProbabilityText(i, 1) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="probability-bar">
-                <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 1)">
-                  <span class="probability-text">{{ getProbabilityText(i, 1) }}</span>
+              <ng-template #noWatsonx>
+                <p>Nenhum resultado Watsonx ainda.</p>
+              </ng-template>
+            </div>
+
+            <!-- GPT -->
+            <div>
+              <h5 class="record-title">GPT</h5>
+              <div *ngIf="gptAnalysisResult; else noGpt">
+                <div class="result-record" *ngFor="let result of getGptAnalysisResults(); let i = index">
+                  <div class="result-item">
+                    <span class="result-label">Registro:</span>
+                    <span class="result-value">#{{ i + 1 }} — {{ csvHeaders[0] }}: {{ csvData[i + 1][0] }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">Predição:</span>
+                    <span class="result-value prediction" [class]="getPredictionClass(getPredictionValue(i))">
+                      {{ getPredictionValue(i) }}
+                    </span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">Probabilidades:</span>
+                    <div class="probabilities">
+                      <div class="probability-bar">
+                        <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 0)">
+                          <span class="probability-text">{{ getProbabilityText(i, 0) }}</span>
+                        </div>
+                      </div>
+                      <div class="probability-bar">
+                        <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 1)">
+                          <span class="probability-text">{{ getProbabilityText(i, 1) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+              <ng-template #noGpt>
+                <p>Nenhum resultado GPT ainda.</p>
+              </ng-template>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="button-group">
-      <button class="analyze-btn" [disabled]="!canAnalyze" (click)="analyzeDocument()">
-        <span class="btn-text">{{ isAnalyzing ? 'Analisando...' : 'Analisar com Simulação' }}</span>
-        <span class="btn-icon" *ngIf="!isAnalyzing">→</span>
-        <span class="btn-spinner" *ngIf="isAnalyzing">⏳</span>
-      </button>
-
-      <button class="analyze-btn real-api-btn" [disabled]="!canAnalyze" (click)="analyzeWithRealAPI()">
-        <span class="btn-text">Analisar com API Real</span>
-        <span class="btn-icon">🌐</span>
-      </button>
     </div>
   </div>
 </main>

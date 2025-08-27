@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WatsonxService, RiskAnalysisRequest, RiskAnalysisResponse } from './shared/services/watsonx.service';
+import { WatsonxService, RiskAnalysisRequest, RiskAnalysisResponse } from './shared/services/watsonx/watsonx.service';
+import { GptService } from './shared/services/gpt/gpt.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { NavbarComponent } from "./components/navbar/navbar.component";
 import { FooterComponent } from './components/footer/footer.component';
 
@@ -27,11 +30,15 @@ export class AppComponent {
   csvObjects: CsvRow[] = [];
   validationMessage: ValidationMessage | null = null;
   isAnalyzing = false;
+  isSimulatingAnalyzing = false;
+  isRealAnalyzing = false;
   canAnalyze = false;
   analysisResult: RiskAnalysisResponse | null = null;
+  gptAnalysisResult: RiskAnalysisResponse | null = null;
 
   constructor(
-    private watsonxService: WatsonxService
+    private watsonxService: WatsonxService,
+    private gptService: GptService
   ) {}
 
   onFileSelected(event: any): void {
@@ -176,15 +183,18 @@ export class AppComponent {
     this.canAnalyze = false;
     this.validationMessage = null;
     this.analysisResult = null;
+    this.gptAnalysisResult = null;
   }
 
   async analyzeDocument(): Promise<void> {
-    if (!this.selectedFile || !this.canAnalyze || this.isAnalyzing) {
+    if (!this.selectedFile || !this.canAnalyze || this.isSimulatingAnalyzing || this.isRealAnalyzing) {
       return;
     }
 
     this.isAnalyzing = true;
+    this.isSimulatingAnalyzing = true;
     this.analysisResult = null;
+    this.gptAnalysisResult = null;
 
     try {
       // Converter dados CSV para o formato da API
@@ -195,25 +205,43 @@ export class AppComponent {
 
       console.log('Dados preparados para análise de risco:', riskAnalysisData);
 
-      // Usar método local de simulação
-      this.watsonxService.analyzeRiskLocal(riskAnalysisData).subscribe(
-        (result: RiskAnalysisResponse) => {
-          this.analysisResult = result;
-          const recordCount = this.getAnalysisResults().length;
-          this.showValidationMessage('success', `Análise de risco concluída com sucesso! ${recordCount} registros analisados.`);
-          console.log('Resultado da análise:', result);
-        },
-        (error: any) => {
-          console.error('Erro na análise:', error);
-          this.showValidationMessage('error', 'Erro durante a análise. Verifique o console para detalhes.');
-        }
+      // Executar simulações em paralelo (Watsonx e GPT) e finalizar carregamento apenas quando ambos concluírem
+      const watsonx$ = this.watsonxService.analyzeRiskLocal(riskAnalysisData).pipe(
+        catchError((error) => {
+          console.error('Erro na análise Watsonx:', error);
+          this.showValidationMessage('error', 'Erro durante a análise Watsonx. Verifique o console para detalhes.');
+          return of(null as unknown as RiskAnalysisResponse);
+        })
       );
+
+      const gpt$ = this.gptService.analyzeRiskLocal(riskAnalysisData).pipe(
+        catchError((error) => {
+          console.error('Erro na análise GPT:', error);
+          this.showValidationMessage('error', 'Erro durante a análise GPT. Verifique o console para detalhes.');
+          return of(null as unknown as RiskAnalysisResponse);
+        })
+      );
+
+      forkJoin([watsonx$, gpt$]).subscribe(([watsonxResult, gptResult]) => {
+        if (watsonxResult) {
+          this.analysisResult = watsonxResult;
+          const recordCount = this.getAnalysisResults().length;
+          this.showValidationMessage('success', `Watsonx concluído. ${recordCount} registros.`);
+        }
+        if (gptResult) {
+          this.gptAnalysisResult = gptResult;
+          const recordCount = this.getGptAnalysisResults().length;
+          this.showValidationMessage('success', `GPT concluído. ${recordCount} registros.`);
+        }
+        this.isSimulatingAnalyzing = false;
+        this.isAnalyzing = this.isRealAnalyzing || this.isSimulatingAnalyzing;
+      });
 
     } catch (error) {
       console.error('Erro na análise:', error);
       this.showValidationMessage('error', 'Erro durante a análise. Verifique o console para detalhes.');
-    } finally {
-      this.isAnalyzing = false;
+      this.isSimulatingAnalyzing = false;
+      this.isAnalyzing = this.isRealAnalyzing || this.isSimulatingAnalyzing;
     }
   }
 
@@ -237,12 +265,14 @@ export class AppComponent {
 
   // Método para usar a API real (quando disponível)
   async analyzeWithRealAPI(): Promise<void> {
-    if (!this.selectedFile || !this.canAnalyze || this.isAnalyzing) {
+    if (!this.selectedFile || !this.canAnalyze || this.isSimulatingAnalyzing || this.isRealAnalyzing) {
       return;
     }
 
     this.isAnalyzing = true;
+    this.isRealAnalyzing = true;
     this.analysisResult = null;
+    this.gptAnalysisResult = null;
 
     try {
       const riskAnalysisData = this.watsonxService.convertCsvToRiskAnalysis(
@@ -252,24 +282,43 @@ export class AppComponent {
 
       console.log('Enviando dados para API real:', riskAnalysisData);
 
-      this.watsonxService.analyzeRisk(riskAnalysisData).subscribe(
-        (result: RiskAnalysisResponse) => {
-          this.analysisResult = result;
-          const recordCount = this.getAnalysisResults().length;
-          this.showValidationMessage('success', `Análise de risco concluída com sucesso! ${recordCount} registros analisados.`);
-          console.log('Resultado da API real:', result);
-        },
-        (error: any) => {
-          console.error('Erro na API real:', error);
-          this.showValidationMessage('error', 'Erro na API. Verifique o console para detalhes.');
-        }
+      // Executar Watsonx e GPT em paralelo usando APIs reais e finalizar carregamento apenas quando ambos concluírem
+      const watsonx$ = this.watsonxService.analyzeRisk(riskAnalysisData).pipe(
+        catchError((error) => {
+          console.error('Erro na API Watsonx:', error);
+          this.showValidationMessage('error', 'Erro na API Watsonx. Verifique o console para detalhes.');
+          return of(null as unknown as RiskAnalysisResponse);
+        })
       );
+
+      const gpt$ = this.gptService.analyzeRisk(riskAnalysisData).pipe(
+        catchError((error) => {
+          console.error('Erro na API GPT:', error);
+          this.showValidationMessage('error', 'Erro na API GPT. Verifique o console para detalhes.');
+          return of(null as unknown as RiskAnalysisResponse);
+        })
+      );
+
+      forkJoin([watsonx$, gpt$]).subscribe(([watsonxResult, gptResult]) => {
+        if (watsonxResult) {
+          this.analysisResult = watsonxResult;
+          const recordCount = this.getAnalysisResults().length;
+          this.showValidationMessage('success', `Watsonx concluído. ${recordCount} registros.`);
+        }
+        if (gptResult) {
+          this.gptAnalysisResult = gptResult;
+          const recordCount = this.getGptAnalysisResults().length;
+          this.showValidationMessage('success', `GPT concluído. ${recordCount} registros.`);
+        }
+        this.isRealAnalyzing = false;
+        this.isAnalyzing = this.isRealAnalyzing || this.isSimulatingAnalyzing;
+      });
 
     } catch (error) {
       console.error('Erro na análise:', error);
       this.showValidationMessage('error', 'Erro durante a análise. Verifique o console para detalhes.');
-    } finally {
-      this.isAnalyzing = false;
+      this.isRealAnalyzing = false;
+      this.isAnalyzing = this.isRealAnalyzing || this.isSimulatingAnalyzing;
     }
   }
 
@@ -282,6 +331,16 @@ export class AppComponent {
       return [];
     }
     return this.analysisResult.predictions[0].values;
+  }
+
+  getGptAnalysisResults(): any[] {
+    if (!this.gptAnalysisResult ||
+        !this.gptAnalysisResult.predictions ||
+        !this.gptAnalysisResult.predictions[0] ||
+        !this.gptAnalysisResult.predictions[0].values) {
+      return [];
+    }
+    return this.gptAnalysisResult.predictions[0].values;
   }
 
   // Método para obter a classe CSS da predição
