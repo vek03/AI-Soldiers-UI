@@ -51,7 +51,7 @@ export class WatsonxService {
     };
 
     // Endpoint para análise de risco
-    const url = `${this.baseUrl}/model-risk`;
+    const url = `${this.baseUrl}/model-risk?engine=watson`;
 
     return this.http.post<RiskAnalysisResponse>(url, data, { headers });
   }

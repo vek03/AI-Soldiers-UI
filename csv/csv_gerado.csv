@@ -1,0 +1,11 @@
+CustomerID,CheckingStatus,LoanDuration,CreditHistory,LoanPurpose,LoanAmount,ExistingSavings,EmploymentDuration,InstallmentPercent,Sex,OthersOnLoan,CurrentResidenceDuration,OwnsProperty,Age,InstallmentPlans,Housing,ExistingCreditsCount,Job,Dependents,Telephone,ForeignWorker
+10001,<0,12,critical,car,3000,500_to_1000,>7,2,male,none,3,real_estate,35,none,own,1,skilled,1,yes,yes
+10002,0<=X<200,24,existing_paid,furniture,2500,<100,1<=X<4,4,female,co-applicant,2,car,29,bank,rent,2,unskilled,0,no,yes
+10003,no_account,6,delayed,new_car,1500,no_known_savings,<1,1,male,none,4,life_insurance,40,none,own,1,skilled,2,yes,yes
+10004,>200,36,fully_paid,business,8000,>=1000,>7,3,male,guarantor,5,real_estate,50,store,free,1,management,2,no,yes
+10005,0<=X<200,18,critical,radio/TV,2200,100_to_500,4<=X<7,2,female,none,2,car,27,none,rent,1,unskilled,0,no,no
+10006,<0,9,existing_paid,repairs,1000,500_to_1000,1<=X<4,1,male,none,1,life_insurance,31,none,own,0,skilled,1,yes,yes
+10007,>200,48,fully_paid,education,9000,>=1000,>7,4,male,none,4,real_estate,45,bank,own,2,management,2,no,yes
+10008,no_account,15,delayed,car,1800,<100,1<=X<4,2,female,co-applicant,3,car,33,none,rent,1,skilled,1,yes,no
+10009,<0,30,critical,business,5000,100_to_500,4<=X<7,3,male,none,2,real_estate,38,none,free,1,unskilled,2,no,yes
+10010,0<=X<200,21,existing_paid,new_car,2700,<100,<1,2,female,none,1,life_insurance,26,none,rent,1,skilled,0,yes,yes

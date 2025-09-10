@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WatsonxService, RiskAnalysisRequest, RiskAnalysisResponse } from './shared/services/watsonx/watsonx.service';
-import { GptService } from './shared/services/gpt/gpt.service';
+import { GptService, RiskAnalysisResponseGPT } from './shared/services/gpt/gpt.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { NavbarComponent } from "./components/navbar/navbar.component";
@@ -34,7 +34,7 @@ export class AppComponent {
   isRealAnalyzing = false;
   canAnalyze = false;
   analysisResult: RiskAnalysisResponse | null = null;
-  gptAnalysisResult: RiskAnalysisResponse | null = null;
+  gptAnalysisResult: RiskAnalysisResponseGPT | null = null;
 
   constructor(
     private watsonxService: WatsonxService,
@@ -218,7 +218,7 @@ export class AppComponent {
         catchError((error) => {
           console.error('Erro na análise GPT:', error);
           this.showValidationMessage('error', 'Erro durante a análise GPT. Verifique o console para detalhes.');
-          return of(null as unknown as RiskAnalysisResponse);
+          return of(null as unknown as RiskAnalysisResponseGPT);
         })
       );
 
@@ -263,6 +263,24 @@ export class AppComponent {
     }
   }
 
+  handleGPT(riskAnalysisData: any){
+    return new Promise((resolve, reject) => {
+      this.gptService.analyzeRisk(riskAnalysisData).subscribe({
+        next: (res) => resolve(res),
+        error: (err) => reject(err)
+      })
+    })
+  }
+
+  handleWatson(riskAnalysisData: any){
+    return new Promise((resolve, reject) => {
+      this.watsonxService.analyzeRisk(riskAnalysisData).subscribe({
+        next: (res) => resolve(res),
+        error: (err) => reject(err)
+      })
+    })
+  }
+
   // Método para usar a API real (quando disponível)
   async analyzeWithRealAPI(): Promise<void> {
     if (!this.selectedFile || !this.canAnalyze || this.isSimulatingAnalyzing || this.isRealAnalyzing) {
@@ -282,37 +300,31 @@ export class AppComponent {
 
       console.log('Enviando dados para API real:', riskAnalysisData);
 
+      var watsonx$;
+
       // Executar Watsonx e GPT em paralelo usando APIs reais e finalizar carregamento apenas quando ambos concluírem
-      const watsonx$ = this.watsonxService.analyzeRisk(riskAnalysisData).pipe(
-        catchError((error) => {
-          console.error('Erro na API Watsonx:', error);
-          this.showValidationMessage('error', 'Erro na API Watsonx. Verifique o console para detalhes.');
-          return of(null as unknown as RiskAnalysisResponse);
-        })
-      );
+      await this.handleWatson(riskAnalysisData).then((res) => {
+        watsonx$ = res;
+      })
 
-      const gpt$ = this.gptService.analyzeRisk(riskAnalysisData).pipe(
-        catchError((error) => {
-          console.error('Erro na API GPT:', error);
-          this.showValidationMessage('error', 'Erro na API GPT. Verifique o console para detalhes.');
-          return of(null as unknown as RiskAnalysisResponse);
-        })
-      );
+      var gpt$;
 
-      forkJoin([watsonx$, gpt$]).subscribe(([watsonxResult, gptResult]) => {
-        if (watsonxResult) {
-          this.analysisResult = watsonxResult;
+      await this.handleGPT(riskAnalysisData).then((res) => {
+        gpt$ = res;
+      })
+
+        if (watsonx$) {
+          this.analysisResult = watsonx$;
           const recordCount = this.getAnalysisResults().length;
           this.showValidationMessage('success', `Watsonx concluído. ${recordCount} registros.`);
         }
-        if (gptResult) {
-          this.gptAnalysisResult = gptResult;
+        if (gpt$) {
+          this.gptAnalysisResult = gpt$;
           const recordCount = this.getGptAnalysisResults().length;
           this.showValidationMessage('success', `GPT concluído. ${recordCount} registros.`);
         }
         this.isRealAnalyzing = false;
         this.isAnalyzing = this.isRealAnalyzing || this.isSimulatingAnalyzing;
-      });
 
     } catch (error) {
       console.error('Erro na análise:', error);
@@ -359,6 +371,17 @@ export class AppComponent {
     }
   }
 
+  getPredictionClassGPT(prediction: string): string {
+    switch (prediction) {
+      case 'enable':
+        return 'no-risk';
+      case 'disabled':
+        return 'low-risk';
+      default:
+        return 'unknown-risk';
+    }
+  }
+
   // Método para obter o valor da predição de forma segura
   getPredictionValue(recordIndex: number = 0): string {
     const results = this.getAnalysisResults();
@@ -367,6 +390,16 @@ export class AppComponent {
     }
 
     const value = results[recordIndex][0];
+    return typeof value === 'string' ? value : 'Unknown';
+  }
+
+  getPredictionValueGPT(recordIndex: number = 0): string {
+    const results = this.getGptAnalysisResults();
+    if (recordIndex >= results.length || !results[recordIndex]) {
+      return 'Unknown';
+    }
+
+    const value = results[recordIndex];
     return typeof value === 'string' ? value : 'Unknown';
   }
 
@@ -390,6 +423,22 @@ export class AppComponent {
     return '0.0%';
   }
 
+  getProbabilityTextGPT(recordIndex: number = 0, probIndex: number = 0): string {
+    const results = this.getGptAnalysisResults();
+    if (recordIndex >= results.length ||
+        !results[recordIndex]) {
+      return '0.0%';
+    }
+
+    const probabilities = results[recordIndex][1];
+    const prob = probabilities;
+    if (typeof prob === 'number') {
+      return (prob * 100).toFixed(1) + '%';
+    }
+
+    return '0.0%';
+  }
+
   // Método para obter a porcentagem da probabilidade de forma segura
   getProbabilityPercentage(recordIndex: number = 0, probIndex: number = 0): number {
     const results = this.getAnalysisResults();
@@ -403,6 +452,23 @@ export class AppComponent {
 
     const probabilities = results[recordIndex][1];
     const prob = probabilities[probIndex];
+    if (typeof prob === 'number') {
+      return prob * 100;
+    }
+
+    return 0;
+  }
+
+  getProbabilityPercentageGPT(recordIndex: number = 0, probIndex: number = 0): number {
+    const results = this.getGptAnalysisResults();
+    if (recordIndex >= results.length ||
+        !results[recordIndex] ||
+        !results[recordIndex][1]) {
+      return 0;
+    }
+
+    const probabilities = results[recordIndex][1];
+    const prob = probabilities;
     if (typeof prob === 'number') {
       return prob * 100;
     }

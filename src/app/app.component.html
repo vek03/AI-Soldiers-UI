@@ -136,21 +136,21 @@
                   </div>
                   <div class="result-item">
                     <span class="result-label">Predição:</span>
-                    <span class="result-value prediction" [class]="getPredictionClass(getPredictionValue(i))">
-                      {{ getPredictionValue(i) }}
+                    <span class="result-value prediction" [class]="getPredictionClassGPT(getPredictionValueGPT(i))">
+                      {{ getPredictionValueGPT(i) }}
                     </span>
                   </div>
                   <div class="result-item">
                     <span class="result-label">Probabilidades:</span>
                     <div class="probabilities">
                       <div class="probability-bar">
-                        <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 0)">
-                          <span class="probability-text">{{ getProbabilityText(i, 0) }}</span>
+                        <div class="probability-fill" [style.width.%]="getProbabilityPercentageGPT(i, 0)">
+                          <span class="probability-text">{{ getProbabilityTextGPT(i, 0) }}</span>
                         </div>
                       </div>
                       <div class="probability-bar">
-                        <div class="probability-fill" [style.width.%]="getProbabilityPercentage(i, 1)">
-                          <span class="probability-text">{{ getProbabilityText(i, 1) }}</span>
+                        <div class="probability-fill" [style.width.%]="getProbabilityPercentageGPT(i, 1)">
+                          <span class="probability-text">{{ getProbabilityTextGPT(i, 1) }}</span>
                         </div>
                       </div>
                     </div>

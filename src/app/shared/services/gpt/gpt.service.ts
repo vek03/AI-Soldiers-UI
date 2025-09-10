@@ -2,10 +2,17 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { RiskAnalysisRequest, RiskAnalysisResponse } from '../watsonx/watsonx.service';
+import { RiskAnalysisRequest } from '../watsonx/watsonx.service';
 
 export interface CsvRow {
   [key: string]: string;
+}
+
+export interface RiskAnalysisResponseGPT {
+  predictions: Array<{
+    fields: string[];
+    values: Array<Array<string | number>>;
+  }>;
 }
 
 @Injectable({
@@ -18,7 +25,7 @@ export class GptService {
 
   constructor(private http: HttpClient) { }
 
-  analyzeRisk(data: RiskAnalysisRequest): Observable<RiskAnalysisResponse> {
+  analyzeRisk(data: RiskAnalysisRequest): Observable<RiskAnalysisResponseGPT> {
     const headers = {
       'Authorization': `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json'
@@ -26,7 +33,7 @@ export class GptService {
 
     const url = `${this.baseUrl}/model-risk`;
 
-    return this.http.post<RiskAnalysisResponse>(url, data, { headers });
+    return this.http.post<RiskAnalysisResponseGPT>(url, data, { headers });
   }
 
   convertCsvToRiskAnalysis(csvData: CsvRow[], headers: string[]): RiskAnalysisRequest {
@@ -56,12 +63,12 @@ export class GptService {
     };
   }
 
-  analyzeRiskLocal(data: RiskAnalysisRequest): Observable<RiskAnalysisResponse> {
+  analyzeRiskLocal(data: RiskAnalysisRequest): Observable<RiskAnalysisResponseGPT> {
     return new Observable(observer => {
       setTimeout(() => {
         const recordCount = data.input_data[0]?.values?.length || 0;
 
-        const values = [] as Array<[string, number[]]>;
+        const values = [] as Array<[string, number]>;
         for (let i = 0; i < recordCount; i++) {
           values.push([
             this.generateRandomPrediction(),
@@ -69,7 +76,7 @@ export class GptService {
           ]);
         }
 
-        const result: RiskAnalysisResponse = {
+        const result: RiskAnalysisResponseGPT = {
           predictions: [{
             fields: ['prediction', 'probability'],
             values: values as any
@@ -87,10 +94,9 @@ export class GptService {
     return predictions[Math.floor(Math.random() * predictions.length)];
   }
 
-  private generateRandomProbabilities(): number[] {
+  private generateRandomProbabilities(): number {
     const p1 = Math.random();
-    const p2 = 1 - p1;
-    return [p1, p2];
+    return p1;
   }
 }
 
