@@ -19,6 +19,7 @@ Aplicação **Angular** para análise de possíveis malwares em arquivos **CSV**
 - **Backend/API:** Python
 - **IA/ML:** WatsonX + GPT-4  
 - **UI/UX:** Bootstrap / Material Angular
+- **Node:** 20.17.0
 
 ---
 
@@ -40,4 +41,20 @@ O repositório do backend que hospeda a API está disponível no seguinte link:
 |   |   |    ├── services/  # Serviços (API WatsonX, API GPT-4)
 │   └── environments/       # Configurações de ambiente
 └── README.md
+```
 
+---
+
+## ▶️ Como rodar a UI
+
+> Crie um arquivo "environments.ts" baseado em "environments.example.ts" em src/environments
+
+```bash
+# Instalar dependências
+npm install
+
+# Rodar app
+npm start
+```
+
+---
