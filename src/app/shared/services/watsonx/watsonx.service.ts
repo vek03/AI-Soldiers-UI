@@ -24,10 +24,14 @@ export interface RiskAnalysisRequest {
 }
 
 export interface RiskAnalysisResponse {
-  predictions: Array<{
-    fields: string[];
-    values: Array<Array<string | number[]>>;
-  }>;
+  engine: string;
+  ok: boolean;
+  result: {
+    predictions: Array<{
+      fields: string[];
+      values: Array<Array<string | number[]>>;
+    }>;
+  };
 }
 
 @Injectable({
@@ -109,10 +113,14 @@ export class WatsonxService {
         }
 
         const result: RiskAnalysisResponse = {
-          predictions: [{
-            fields: ['prediction', 'probability'],
-            values: values
-          }]
+          engine: 'local-simulation',
+          ok: true,
+          result: {
+            predictions: [{
+              fields: ['prediction', 'probability'],
+              values: values
+            }]
+          }
         };
 
         observer.next(result);

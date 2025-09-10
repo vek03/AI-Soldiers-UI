@@ -337,12 +337,12 @@ export class AppComponent {
   // Método para obter os resultados da análise de forma segura
   getAnalysisResults(): any[] {
     if (!this.analysisResult ||
-        !this.analysisResult.predictions ||
-        !this.analysisResult.predictions[0] ||
-        !this.analysisResult.predictions[0].values) {
+        !this.analysisResult.result.predictions ||
+        !this.analysisResult.result.predictions[0] ||
+        !this.analysisResult.result.predictions[0].values) {
       return [];
     }
-    return this.analysisResult.predictions[0].values;
+    return this.analysisResult.result.predictions[0].values;
   }
 
   getGptAnalysisResults(): any[] {
@@ -373,10 +373,10 @@ export class AppComponent {
 
   getPredictionClassGPT(prediction: string): string {
     switch (prediction) {
-      case 'enable':
+      case 'Approved':
         return 'no-risk';
-      case 'disabled':
-        return 'low-risk';
+      case 'Denied':
+        return 'high-risk';
       default:
         return 'unknown-risk';
     }
@@ -386,6 +386,7 @@ export class AppComponent {
   getPredictionValue(recordIndex: number = 0): string {
     const results = this.getAnalysisResults();
     if (recordIndex >= results.length || !results[recordIndex] || !results[recordIndex][0]) {
+      console.warn('No Watsonx result for index', recordIndex);
       return 'Unknown';
     }
 
@@ -396,11 +397,17 @@ export class AppComponent {
   getPredictionValueGPT(recordIndex: number = 0): string {
     const results = this.getGptAnalysisResults();
     if (recordIndex >= results.length || !results[recordIndex]) {
+      console.warn('No GPT result for index', recordIndex);
       return 'Unknown';
     }
 
-    const value = results[recordIndex];
-    return typeof value === 'string' ? value : 'Unknown';
+    const value = results[recordIndex][0];
+    return typeof value === 'string' ? this.captalizeFirstLetter(value) : 'Unknown';
+  }
+
+  captalizeFirstLetter(text: string): string {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
   }
 
   // Método para obter o texto da probabilidade de forma segura
@@ -433,6 +440,10 @@ export class AppComponent {
     const probabilities = results[recordIndex][1];
     const prob = probabilities;
     if (typeof prob === 'number') {
+      if(probIndex !== 0){
+        return ((1 - prob) * 100).toFixed(1) + '%';
+      }
+
       return (prob * 100).toFixed(1) + '%';
     }
 
@@ -470,6 +481,10 @@ export class AppComponent {
     const probabilities = results[recordIndex][1];
     const prob = probabilities;
     if (typeof prob === 'number') {
+      if(probIndex !== 0){
+        return (1 - prob) * 100;
+      }
+
       return prob * 100;
     }
 

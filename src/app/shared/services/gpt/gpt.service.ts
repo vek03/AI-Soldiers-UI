@@ -9,6 +9,9 @@ export interface CsvRow {
 }
 
 export interface RiskAnalysisResponseGPT {
+  engine: string;
+  ok: boolean;
+  model: string;
   predictions: Array<{
     fields: string[];
     values: Array<Array<string | number>>;
@@ -77,6 +80,9 @@ export class GptService {
         }
 
         const result: RiskAnalysisResponseGPT = {
+          engine: 'local-simulation',
+          ok: true,
+          model: 'gpt-simulated-model',
           predictions: [{
             fields: ['prediction', 'probability'],
             values: values as any
