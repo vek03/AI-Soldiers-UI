@@ -11,7 +11,7 @@
       </div>
 
       <h1 class="upload-title">Análise de Risco</h1>
-      <p class="upload-description">Faça upload de um arquivo CSV para análise de risco usando WatsonX e GPT</p>
+      <p class="upload-description">Faça upload de um arquivo CSV para análise de risco usando WatsonX</p>
 
       <div class="file-input-container"
           (dragover)="onDragOver($event)"
@@ -76,7 +76,7 @@
         <h4 class="results-title">Resultados da Análise de Risco</h4>
         <div class="results-container results-scroll">
           <!-- Aviso quando nenhum arquivo estiver selecionado -->
-          <div *ngIf="!selectedFile && !isAnalyzing && !analysisResult && !gptAnalysisResult" class="placeholder-message">
+          <div *ngIf="!selectedFile && !isAnalyzing && !analysisResult" class="placeholder-message">
             Anexe um arquivo CSV e clique em Analisar para visualizar os resultados aqui.
           </div>
 
@@ -87,7 +87,7 @@
           </div>
 
           <!-- Resultados quando disponíveis -->
-          <div class="results-two-col" *ngIf="selectedFile && !isAnalyzing && (analysisResult || gptAnalysisResult)">
+          <div *ngIf="selectedFile && !isAnalyzing && analysisResult">
             <!-- Watsonx -->
             <div>
               <h5 class="record-title">Watsonx</h5>
@@ -122,43 +122,6 @@
               </div>
               <ng-template #noWatsonx>
                 <p>Nenhum resultado Watsonx ainda.</p>
-              </ng-template>
-            </div>
-
-            <!-- GPT -->
-            <div>
-              <h5 class="record-title">GPT</h5>
-              <div *ngIf="gptAnalysisResult; else noGpt">
-                <div class="result-record" *ngFor="let result of getGptAnalysisResults(); let i = index">
-                  <div class="result-item">
-                    <span class="result-label">Registro:</span>
-                    <span class="result-value">#{{ i + 1 }} — {{ csvHeaders[0] }}: {{ csvData[i + 1][0] }}</span>
-                  </div>
-                  <div class="result-item">
-                    <span class="result-label">Predição:</span>
-                    <span class="result-value prediction" [class]="getPredictionClassGPT(getPredictionValueGPT(i))">
-                      {{ getPredictionValueGPT(i) }}
-                    </span>
-                  </div>
-                  <div class="result-item">
-                    <span class="result-label">Probabilidades:</span>
-                    <div class="probabilities">
-                      <div class="probability-bar">
-                        <div class="probability-fill" [style.width.%]="getProbabilityPercentageGPT(i, 0)">
-                          <span class="probability-text">{{ getProbabilityTextGPT(i, 0) }}</span>
-                        </div>
-                      </div>
-                      <div class="probability-bar">
-                        <div class="probability-fill" [style.width.%]="getProbabilityPercentageGPT(i, 1)">
-                          <span class="probability-text">{{ getProbabilityTextGPT(i, 1) }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <ng-template #noGpt>
-                <p>Nenhum resultado GPT ainda.</p>
               </ng-template>
             </div>
           </div>

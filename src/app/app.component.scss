@@ -252,12 +252,6 @@
   overflow-y: auto;
 }
 
-.results-two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
 .placeholder-message {
   color: #666666;
   font-size: 0.95rem;
