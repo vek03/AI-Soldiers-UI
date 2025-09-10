@@ -2,58 +2,42 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.15.
 
-## Development server
+Aplicação **Angular** para análise de possíveis malwares em arquivos **CSV**, utilizando **WatsonX** e **GPT-4** para processamento inteligente e geração de relatórios.
 
-To start a local development server, run:
+---
 
+## 📌 Funcionalidades
+- Upload de arquivos CSV
+- Análise automática com **WatsonX** e **GPT-4**
+- Relatórios interativos com classificação de risco
+- Visualização de estatísticas (porcentagem)
+
+---
+
+## 🏗️ Arquitetura
+- **Frontend:** Angular 19+
+- **Backend/API:** Python
+- **IA/ML:** WatsonX + GPT-4  
+- **UI/UX:** Bootstrap / Material Angular
+
+---
+
+## 🌐 Backend
+
+O repositório do backend que hospeda a API está disponível no seguinte link:  
+
+👉 [Acessar Repositório do Frontend](https://github.com/vek03/AI-Soldiers-WatsonX-GPT4-API)
+
+---
+
+## 📂 Estrutura do Projeto
 ```bash
-ng serve
-```
+.
+├── src/
+│   ├── app/
+│   │   ├── components/     # Componentes da UI
+|   |   ├── shared/         # Pasta de componentes e services compartilhados
+|   |   |    ├── services/  # Serviços (API WatsonX, API GPT-4)
+│   └── environments/       # Configurações de ambiente
+└── README.md
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
